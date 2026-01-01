@@ -2,8 +2,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedContent, Situation, Target, MessageStyle, ImageStyle, QuoteTheme, QuoteOption } from "../types";
 
-export const fetchQuoteOptions = async (theme: QuoteTheme): Promise<QuoteOption[]> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+export const fetchQuoteOptions = async (apiKey: string, theme: QuoteTheme): Promise<QuoteOption[]> => {
+  const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `주제: ${theme}. 비즈니스 리더십과 성공에 관련된 깊이 있는 명언 5개와 그 저자를 추출하세요.`,
@@ -30,6 +30,7 @@ export const fetchQuoteOptions = async (theme: QuoteTheme): Promise<QuoteOption[
 };
 
 export const generateGreetingContent = async (
+  apiKey: string,
   situation: Situation, 
   target: Target,
   sender: string,
@@ -39,7 +40,7 @@ export const generateGreetingContent = async (
   isQuoteOnly: boolean = false,
   selectedQuoteText?: string 
 ): Promise<GeneratedContent> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
   const now = new Date();
   
   const promptContent = isQuoteOnly 
@@ -72,6 +73,7 @@ export const generateGreetingContent = async (
 };
 
 export const generateCardImage = async (
+  apiKey: string,
   theme: string, 
   style: ImageStyle, 
   designRequirement: string,
@@ -82,7 +84,7 @@ export const generateCardImage = async (
   refinementText?: string,
   messageContext?: string
 ): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
   
   const promptText = `High-end cinematic professional background. Theme: ${theme}. Style: ${imageStylePreset || "Cinematic"}. Visual Direction: ${designRequirement}. NO TEXT.`;
 
@@ -96,30 +98,4 @@ export const generateCardImage = async (
     if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
   }
   throw new Error("이미지 데이터가 생성되지 않았습니다.");
-};
-
-export const generateCardVideo = async (
-  theme: string,
-  designRequirement: string,
-  referenceImage?: string,
-  aspectRatio: '16:9' | '9:16' = '16:9',
-  messageContext?: string
-): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const promptText = `Cinematic 4K background video. Theme: ${theme}. Visuals: ${designRequirement}. No text.`;
-
-  let operation = await ai.models.generateVideos({
-    model: 'veo-3.1-fast-generate-preview',
-    prompt: promptText,
-    config: { numberOfVideos: 1, resolution: '720p', aspectRatio }
-  });
-
-  while (!operation.done) {
-    await new Promise(resolve => setTimeout(resolve, 8000));
-    operation = await ai.operations.getVideosOperation({ operation: operation });
-  }
-
-  const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-  if (!downloadLink) throw new Error("영상 링크 생성 실패");
-  return `${downloadLink}&key=${process.env.API_KEY}`;
 };
