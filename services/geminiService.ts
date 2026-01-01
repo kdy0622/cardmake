@@ -8,7 +8,7 @@ export const fetchQuoteOptions = async (theme: QuoteTheme): Promise<QuoteOption[
     model: "gemini-3-flash-preview",
     contents: `주제: ${theme}. 비즈니스 리더십과 성공에 관련된 깊이 있는 명언 5개와 그 저자를 추출하세요.`,
     config: {
-      systemInstruction: "당신은 세계적인 인문학자입니다. 요청한 주제에 대해 영감을 주는 명언 5개를 명언자와 함께 JSON 배열로 응답하세요. 한국어 번역은 세련되고 중후하게 하세요.",
+      systemInstruction: "당신은 세계적인 인문학자입니다. 요청한 주제에 대해 영감을 주는 명언 5개를 명언자와 함께 JSON 배열로 응답하세요.",
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.ARRAY,
@@ -25,7 +25,7 @@ export const fetchQuoteOptions = async (theme: QuoteTheme): Promise<QuoteOption[
   });
   
   const text = response.text;
-  if (!text) throw new Error("Empty response from AI");
+  if (!text) throw new Error("API 응답이 비어있습니다.");
   return JSON.parse(text.trim());
 };
 
@@ -50,14 +50,7 @@ export const generateGreetingContent = async (
     model: "gemini-3-flash-preview",
     contents: promptContent,
     config: {
-      systemInstruction: `
-        당신은 대한민국 최고의 리더십 메시지 전문가입니다.
-        현재 날짜(${now.toLocaleDateString()})와 절기를 반영하여 품격 있는 비즈니스 문장을 작성하세요.
-        - mainMessage: ${selectedQuoteText ? `"${selectedQuoteText}"를 포함하거나 기반으로 한 인사말.` : "3-5줄의 세련된 비즈니스 인사말."}
-        - alternativeMessage: 다른 느낌의 대안 문구.
-        - bgTheme: 이 문구의 정서를 시각화할 수 있는 구체적인 이미지 키워드 (영문). 
-        JSON으로 응답하세요.
-      `,
+      systemInstruction: `당신은 대한민국 최고의 리더십 메시지 전문가입니다. 현재 날짜(${now.toLocaleDateString()})를 반영하여 품격 있는 비즈니스 문장을 작성하세요.`,
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -73,15 +66,9 @@ export const generateGreetingContent = async (
   });
 
   const text = response.text;
-  if (!text) throw new Error("No text response from Gemini");
+  if (!text) throw new Error("문구 생성에 실패했습니다.");
   const parsed = JSON.parse(text.trim());
-  return { 
-    ...parsed, 
-    sender, 
-    situation, 
-    target,
-    wiseSayingOptions: [] // 기본값 유지
-  };
+  return { ...parsed, sender, situation, target, wiseSayingOptions: [] };
 };
 
 export const generateCardImage = async (
@@ -97,32 +84,18 @@ export const generateCardImage = async (
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  const promptText = `
-    High-end cinematic professional background.
-    Theme: ${theme}. 
-    Style: ${imageStylePreset || "Cinematic"} ${imageType || "Nature"}.
-    Visual Direction: ${designRequirement}.
-    Context: ${messageContext || ""}.
-    CRITICAL: NO TEXT, NO LOGOS, NO HUMAN FACES. Optimized for white text overlay.
-  `;
-
-  const parts: any[] = [{ text: promptText }];
-  if (referenceImage) {
-    const [header, data] = referenceImage.split(',');
-    const mimeType = header.split(':')[1].split(';')[0];
-    parts.push({ inlineData: { data, mimeType } });
-  }
+  const promptText = `High-end cinematic professional background. Theme: ${theme}. Style: ${imageStylePreset || "Cinematic"}. Visual Direction: ${designRequirement}. NO TEXT.`;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-image-preview',
-    contents: { parts },
+    contents: { parts: [{ text: promptText }] },
     config: { imageConfig: { aspectRatio, imageSize: "1K" } }
   });
 
   for (const part of response.candidates?.[0]?.content?.parts || []) {
     if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
   }
-  throw new Error("Image generation failed to return data");
+  throw new Error("이미지 데이터가 생성되지 않았습니다.");
 };
 
 export const generateCardVideo = async (
@@ -133,34 +106,20 @@ export const generateCardVideo = async (
   messageContext?: string
 ): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  const promptText = `Cinematic 4K background video. Theme: ${theme}. Visuals: ${designRequirement}. Nature or abstract landscape. No text.`;
+  const promptText = `Cinematic 4K background video. Theme: ${theme}. Visuals: ${designRequirement}. No text.`;
 
-  const videoConfig: any = {
+  let operation = await ai.models.generateVideos({
     model: 'veo-3.1-fast-generate-preview',
     prompt: promptText,
-    config: {
-      numberOfVideos: 1,
-      resolution: '720p',
-      aspectRatio: aspectRatio
-    }
-  };
+    config: { numberOfVideos: 1, resolution: '720p', aspectRatio }
+  });
 
-  if (referenceImage) {
-    const [header, data] = referenceImage.split(',');
-    const mimeType = header.split(':')[1].split(';')[0];
-    videoConfig.image = { imageBytes: data, mimeType };
-  }
-
-  let operation = await ai.models.generateVideos(videoConfig);
-  
   while (!operation.done) {
     await new Promise(resolve => setTimeout(resolve, 8000));
     operation = await ai.operations.getVideosOperation({ operation: operation });
   }
 
   const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-  if (!downloadLink) throw new Error("Video generation link missing");
-  
+  if (!downloadLink) throw new Error("영상 링크 생성 실패");
   return `${downloadLink}&key=${process.env.API_KEY}`;
 };
