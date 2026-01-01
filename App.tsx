@@ -72,7 +72,7 @@ const App: React.FC = () => {
       if (options.length > 0) setSelectedQuote(options[0]);
     } catch (error: any) {
       console.error("Quote Fetch Error:", error);
-      alert("명언 데이터를 가져오지 못했습니다. 잠시 후 다시 시도해주세요.");
+      alert("명언 데이터를 가져오는 도중 오류가 발생했습니다.");
     } finally {
       setIsQuoteFetching(false);
     }
@@ -102,7 +102,7 @@ const App: React.FC = () => {
       if (result.recommendedSeason) setDesignRequirement(result.recommendedSeason);
     } catch (error: any) {
       console.error("Content Gen Error:", error);
-      alert(`카드 생성 도중 오류가 발생했습니다: ${error.message || '네트워크 상태를 확인해주세요.'}`);
+      alert(`카드 생성 오류: ${error.message || '시스템 상태를 확인해주세요.'}`);
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +123,7 @@ const App: React.FC = () => {
     }
     
     setIsVisualLoading(true);
-    setVisualLoadMessage(type === 'image' ? '시네마틱 배경을 합성 중입니다...' : 'AI가 배경 영상을 렌더링 중입니다. (약 1분 소요)');
+    setVisualLoadMessage(type === 'image' ? '시네마틱 배경을 합성 중입니다...' : 'AI가 고화질 영상을 렌더링 중입니다. (약 1분 소요)');
     
     try {
       if (type === 'video') {
@@ -148,7 +148,7 @@ const App: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Visual Gen Error:", error);
-      alert("비주얼 생성에 실패했습니다. (API 키 권한 또는 할당량을 확인해주세요)");
+      alert("비주얼 생성에 실패했습니다. API 키의 유효 프로젝트 여부를 확인해주세요.");
     } finally {
       setIsVisualLoading(false);
     }
@@ -228,7 +228,7 @@ const App: React.FC = () => {
           <h1 className="text-sm md:text-base font-black tracking-widest uppercase">BIZ MASTER <span className="text-amber-500">SIGNATURE LAB</span></h1>
         </div>
         <div className="flex gap-2">
-          {content && <button onClick={handleShare} className="px-5 py-2.5 bg-amber-500 text-black rounded-full text-[10px] font-black hover:brightness-110 shadow-lg">모바일 공유</button>}
+          {content && <button onClick={handleShare} className="px-5 py-2.5 bg-amber-500 text-black rounded-full text-[10px] font-black hover:brightness-110 shadow-lg transition-all">모바일 공유</button>}
         </div>
       </header>
 
@@ -252,7 +252,7 @@ const App: React.FC = () => {
               ) : (
                 <div className="space-y-6">
                   <div className="space-y-3"><label className="text-[9px] text-white/30 uppercase tracking-widest">명언 주제</label><div className="grid grid-cols-3 gap-2">{(['리더십', '용기', '감사'] as const).map(q => <button key={q} onClick={() => setQuoteTheme(q as any)} className={`py-2 text-[10px] font-black rounded-xl border border-white/5 ${quoteTheme === q ? 'bg-white/10 text-amber-500 border-amber-500/50' : 'bg-black/20 text-white/20'}`}>{q}</button>)}</div></div>
-                  <button onClick={handleFetchQuotes} disabled={isQuoteFetching} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-amber-500 hover:bg-white/10 transition-all">{isQuoteFetching ? "추출 중..." : "AI 명언 후보 생성"}</button>
+                  <button onClick={handleFetchQuotes} disabled={isQuoteFetching} className="w-full py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-amber-500 hover:bg-white/10 transition-all">{isQuoteFetching ? "명언 추출 중..." : "AI 명언 후보 생성"}</button>
                   {quoteOptions.length > 0 && <div className="space-y-2 max-h-48 overflow-y-auto pr-1 no-scrollbar border-t border-white/5 pt-4">{quoteOptions.map((opt, idx) => <div key={idx} onClick={() => setSelectedQuote(opt)} className={`p-3 rounded-xl border text-[10px] leading-relaxed cursor-pointer transition-all ${selectedQuote === opt ? 'bg-amber-500 text-black border-transparent shadow-md' : 'bg-black/40 text-white/60 border-white/5 hover:border-white/20'}`}>"{opt.text}" <br/><span className="font-bold opacity-60">- {opt.author}</span></div>)}</div>}
                 </div>
               )}
@@ -278,7 +278,7 @@ const App: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 gap-3">
                 <button onClick={() => handleGenerateVisual('image')} disabled={isVisualLoading} className="w-full py-4 bg-cyan-500 text-black text-[10px] font-black rounded-2xl shadow-xl flex items-center justify-center gap-2 hover:bg-cyan-400 transition-all">{isVisualLoading ? <div className="w-3 h-3 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : "AI 시네마틱 배경 생성"}</button>
-                <button onClick={() => handleGenerateVisual('video')} disabled={isVisualLoading} className="w-full py-4 border border-cyan-500 text-cyan-500 text-[10px] font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-cyan-500 hover:text-black transition-all">시네마틱 영상 렌더링 (VEO 3.1)</button>
+                <button onClick={() => handleGenerateVisual('video')} disabled={isVisualLoading} className="w-full py-4 border border-cyan-500 text-cyan-500 text-[10px] font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-cyan-500 hover:text-black transition-all">고화질 영상 렌더링 (VEO 3.1)</button>
               </div>
               {isVisualLoading && <p className="text-[9px] text-cyan-400 animate-pulse text-center font-bold">{visualLoadMessage}</p>}
             </div>
@@ -288,7 +288,7 @@ const App: React.FC = () => {
         <section className="lg:col-span-8 space-y-10">
           {!content ? (
             <div className="h-[750px] flex flex-col items-center justify-center bg-black/30 rounded-[70px] border border-white/5 border-dashed p-10 shadow-inner relative overflow-hidden group">
-               <div className="text-[11px] font-black text-white/5 tracking-[1em] uppercase text-center animate-pulse">Waiting for your order...</div>
+               <div className="text-[11px] font-black text-white/5 tracking-[1em] uppercase text-center animate-pulse">Designing your signature card...</div>
             </div>
           ) : (
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
@@ -310,10 +310,10 @@ const App: React.FC = () => {
               <div className="bg-[#0b0d12] p-8 md:p-12 rounded-[50px] border border-white/5 space-y-12 shadow-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                   <div className="space-y-6">
-                    <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">Color & Contrast</h4>
+                    <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">Color & Transparency</h4>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><label className="text-[9px] text-white/30 uppercase">텍스트 컬러</label><input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="w-full h-12 bg-black border border-white/10 rounded-2xl cursor-pointer" /></div>
-                      <div className="space-y-2"><label className="text-[9px] text-white/30 uppercase">프레임 컬러</label><input type="color" value={frameColor} onChange={(e) => setFrameColor(e.target.value)} className="w-full h-12 bg-black border border-white/10 rounded-2xl cursor-pointer" /></div>
+                      <div className="space-y-2"><label className="text-[9px] text-white/30 uppercase">글자 색상</label><input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} className="w-full h-12 bg-black border border-white/10 rounded-2xl cursor-pointer" /></div>
+                      <div className="space-y-2"><label className="text-[9px] text-white/30 uppercase">프레임 색상</label><input type="color" value={frameColor} onChange={(e) => setFrameColor(e.target.value)} className="w-full h-12 bg-black border border-white/10 rounded-2xl cursor-pointer" /></div>
                     </div>
                     <div className="space-y-3 pt-2">
                        <div className="flex justify-between"><label className="text-[9px] text-white/30 uppercase">글자 투명도</label><span className="text-[10px] text-amber-500 font-black">{Math.round(textOpacity * 100)}%</span></div>
@@ -322,20 +322,20 @@ const App: React.FC = () => {
                   </div>
 
                   <div className="space-y-6">
-                    <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">Font Selection</h4>
+                    <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">Typography Settings</h4>
                     <select value={selectedFont} onChange={(e) => setSelectedFont(e.target.value)} className="w-full p-4 bg-black border border-white/10 rounded-2xl text-xs text-white outline-none focus:border-amber-500">{KOREAN_FONTS.map(f => <option key={f.value} value={f.value}>{f.name}</option>)}</select>
                     <div className="flex gap-2">
-                      <button onClick={() => setTextAlign('left')} className={`flex-1 py-3 text-[10px] rounded-xl border border-white/5 ${textAlign === 'left' ? 'bg-white text-black' : 'bg-black text-white/30'}`}>L</button>
-                      <button onClick={() => setTextAlign('center')} className={`flex-1 py-3 text-[10px] rounded-xl border border-white/5 ${textAlign === 'center' ? 'bg-white text-black' : 'bg-black text-white/30'}`}>C</button>
-                      <button onClick={() => setTextAlign('right')} className={`flex-1 py-3 text-[10px] rounded-xl border border-white/5 ${textAlign === 'right' ? 'bg-white text-black' : 'bg-black text-white/30'}`}>R</button>
+                      <button onClick={() => setTextAlign('left')} className={`flex-1 py-3 text-[10px] rounded-xl border border-white/5 ${textAlign === 'left' ? 'bg-white text-black' : 'bg-black text-white/30'}`}>LEFT</button>
+                      <button onClick={() => setTextAlign('center')} className={`flex-1 py-3 text-[10px] rounded-xl border border-white/5 ${textAlign === 'center' ? 'bg-white text-black' : 'bg-black text-white/30'}`}>CENTER</button>
+                      <button onClick={() => setTextAlign('right')} className={`flex-1 py-3 text-[10px] rounded-xl border border-white/5 ${textAlign === 'right' ? 'bg-white text-black' : 'bg-black text-white/30'}`}>RIGHT</button>
                     </div>
                   </div>
                   
                   <div className="space-y-6">
-                    <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">Typography Scale</h4>
-                    <div className="space-y-5 bg-black/30 p-5 rounded-3xl border border-white/5">
+                    <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">Scaling Engine</h4>
+                    <div className="space-y-5 bg-black/30 p-5 rounded-3xl border border-white/5 shadow-inner">
                       <div className="space-y-2">
-                        <div className="flex justify-between text-[8px] opacity-40 uppercase"><span>폰트 크기</span><span>{Math.round(fontSizeScale*100)}%</span></div>
+                        <div className="flex justify-between text-[8px] opacity-40 uppercase"><span>폰트 배율</span><span>{Math.round(fontSizeScale*100)}%</span></div>
                         <input type="range" min="0.5" max="2.0" step="0.05" value={fontSizeScale} onChange={(e) => setFontSizeScale(parseFloat(e.target.value))} className="w-full" />
                       </div>
                     </div>
@@ -343,11 +343,10 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="space-y-4 pt-10 border-t border-white/5">
-                   <div className="flex items-center justify-between px-2 mb-4"><label className="text-[10px] font-black text-white/30 uppercase tracking-[1.5em]">Real-time Editor</label></div>
-                  <div className="relative rounded-[50px] bg-black/90 p-4 border border-white/5 overflow-hidden min-h-[300px] shadow-inner"><textarea ref={editorRef} value={currentMessage} onChange={(e) => setCurrentMessage(e.target.value)} className="w-full bg-transparent resize-none outline-none no-scrollbar transition-all duration-300" style={typographyStyles} spellCheck={false} /></div>
+                  <div className="relative rounded-[50px] bg-black/90 p-6 border border-white/5 overflow-hidden min-h-[300px] shadow-2xl transition-all duration-500"><textarea ref={editorRef} value={currentMessage} onChange={(e) => setCurrentMessage(e.target.value)} className="w-full bg-transparent resize-none outline-none no-scrollbar" style={typographyStyles} spellCheck={false} /></div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-10">
-                    <button onClick={handleDownload} className="py-6 bg-gradient-to-r from-amber-600 to-amber-200 text-black font-black uppercase tracking-[0.6em] text-xs rounded-3xl shadow-2xl hover:brightness-110 transition-all">이미지 다운로드</button>
-                    <button onClick={handleShare} className="py-6 border border-white/10 text-white font-black uppercase tracking-[0.4em] text-[10px] rounded-3xl hover:bg-white/5 transition-all">스마트 공유</button>
+                    <button onClick={handleDownload} className="py-6 bg-gradient-to-r from-amber-600 to-amber-200 text-black font-black uppercase tracking-[0.6em] text-xs rounded-3xl shadow-2xl hover:brightness-110 active:scale-[0.98] transition-all">이미지 다운로드</button>
+                    <button onClick={handleShare} className="py-6 border border-white/10 text-white font-black uppercase tracking-[0.4em] text-[10px] rounded-3xl hover:bg-white/5 active:scale-[0.98] transition-all">모바일 다이렉트 공유</button>
                   </div>
                 </div>
               </div>
@@ -355,7 +354,7 @@ const App: React.FC = () => {
           )}
         </section>
       </main>
-      <footer className="py-20 text-center opacity-10 select-none font-black tracking-[1.5em] uppercase italic">Biz Master AI Studio v4.5</footer>
+      <footer className="py-20 text-center opacity-10 select-none font-black tracking-[1.5em] uppercase italic">Biz Master AI Studio • No-Config Edition</footer>
     </div>
   );
 };
