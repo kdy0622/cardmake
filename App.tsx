@@ -15,7 +15,8 @@ declare var html2canvas: any;
 
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('GEMINI_API_KEY') || '');
-  const [isKeyVisible, setIsKeyVisible] = useState(false);
+  const [isActivated, setIsActivated] = useState<boolean>(!!apiKey);
+  const [tempKey, setTempKey] = useState<string>(apiKey);
 
   // Business States
   const [senderName, setSenderName] = useState('');
@@ -56,20 +57,26 @@ const App: React.FC = () => {
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    localStorage.setItem('GEMINI_API_KEY', apiKey);
-  }, [apiKey]);
-
-  const validateKey = () => {
-    if (!apiKey.trim()) {
-      alert("API 키를 입력해주세요.");
-      return false;
+  const handleActivate = () => {
+    if (!tempKey.trim()) {
+      alert("유효한 Gemini API 키를 입력해주세요.");
+      return;
     }
-    return true;
+    localStorage.setItem('GEMINI_API_KEY', tempKey);
+    setApiKey(tempKey);
+    setIsActivated(true);
+  };
+
+  const handleDeactivate = () => {
+    if (window.confirm("API 키 설정을 초기화하시겠습니까?")) {
+      localStorage.removeItem('GEMINI_API_KEY');
+      setApiKey('');
+      setTempKey('');
+      setIsActivated(false);
+    }
   };
 
   const handleFetchQuotes = async () => {
-    if (!validateKey()) return;
     setIsQuoteFetching(true);
     try {
       const options = await fetchQuoteOptions(apiKey, quoteTheme);
@@ -84,7 +91,6 @@ const App: React.FC = () => {
   };
 
   const handleGenerateCard = async () => {
-    if (!validateKey()) return;
     setIsLoading(true);
     try {
       const isQuoteOnly = mainTab === 'quote';
@@ -103,7 +109,7 @@ const App: React.FC = () => {
   };
 
   const handleGenerateVisual = async () => {
-    if (!content || !validateKey()) return;
+    if (!content) return;
     setIsVisualLoading(true);
     setVisualLoadMessage('배경 이미지를 생성 중...');
     try {
@@ -160,33 +166,63 @@ const App: React.FC = () => {
     };
   }, [currentMessage, selectedFont, isItalic, isBold, textAlign, fontSizeScale, letterSpacingScale, lineHeightScale, textColor, textOpacity, textShadowIntensity, textShadowColor]);
 
+  if (!isActivated) {
+    return (
+      <div className="h-screen bg-[#02040a] flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-[#0b0d12] p-10 rounded-[40px] border border-white/5 shadow-2xl space-y-8 animate-in fade-in zoom-in duration-700">
+          <div className="w-20 h-20 bg-amber-500 rounded-3xl mx-auto flex items-center justify-center text-4xl font-black text-black">M</div>
+          <div className="space-y-4">
+            <h1 className="text-2xl font-black tracking-tighter text-white uppercase">Activation Required</h1>
+            <p className="text-white/40 text-sm leading-relaxed">
+              시그니처 디자인 랩을 활성화하려면<br/>
+              본인의 Gemini API 키를 입력해 주세요.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <input 
+              type="password"
+              value={tempKey}
+              onChange={(e) => setTempKey(e.target.value)}
+              placeholder="Gemini API Key를 입력하세요"
+              className="w-full p-5 bg-black/60 border border-white/10 rounded-2xl text-center text-xs text-amber-500 outline-none focus:border-amber-500 transition-all"
+            />
+            <button 
+              onClick={handleActivate}
+              className="w-full py-5 bg-amber-500 text-black font-black rounded-2xl shadow-xl hover:brightness-110 active:scale-[0.98] transition-all"
+            >
+              랩 활성화 (입장하기)
+            </button>
+          </div>
+          <p className="text-[10px] text-white/20 uppercase tracking-widest leading-relaxed">
+            한번 입력하면 이 기기에서<br/>자동으로 인식됩니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#010206] text-[#f8fafc] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#010206] text-[#f8fafc] flex flex-col font-sans animate-in fade-in duration-1000">
       <header className="bg-black/90 py-4 px-10 border-b border-white/5 flex items-center justify-between sticky top-0 z-50 backdrop-blur-2xl">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-black font-black">M</div>
           <h1 className="text-base font-black tracking-widest uppercase">BIZ MASTER <span className="text-amber-500">SIGNATURE LAB</span></h1>
         </div>
         <div className="flex gap-4 items-center">
-          <div className="flex flex-col items-end">
-             <label className="text-[8px] text-white/30 uppercase tracking-widest mb-1">API CONFIG</label>
-             <div className="flex gap-2">
-               <input 
-                 type={isKeyVisible ? "text" : "password"}
-                 value={apiKey}
-                 onChange={(e) => setApiKey(e.target.value)}
-                 placeholder="Enter Gemini API Key"
-                 className="bg-black/50 border border-white/10 rounded-lg px-3 py-1 text-[10px] w-48 focus:border-amber-500 outline-none transition-all"
-               />
-               <button 
-                 onClick={() => setIsKeyVisible(!isKeyVisible)}
-                 className="text-[10px] text-white/30 hover:text-white transition-all"
-               >
-                 {isKeyVisible ? "Hide" : "Show"}
-               </button>
-             </div>
-          </div>
-          {content && <button onClick={handleShare} className="px-5 py-2.5 bg-amber-500 text-black rounded-full text-[10px] font-black hover:brightness-110 shadow-lg transition-all">모바일 공유</button>}
+          <button 
+            onClick={handleDeactivate}
+            className="text-[9px] font-black text-white/20 uppercase tracking-widest hover:text-red-500 transition-all"
+          >
+            Reset Key
+          </button>
+          {content && (
+            <button 
+              onClick={handleShare} 
+              className="px-5 py-2.5 bg-amber-500 text-black rounded-full text-[10px] font-black hover:brightness-110 shadow-lg transition-all"
+            >
+              모바일 공유
+            </button>
+          )}
         </div>
       </header>
 
